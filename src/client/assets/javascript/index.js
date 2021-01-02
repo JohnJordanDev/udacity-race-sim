@@ -317,6 +317,19 @@ function defaultFetchOpts() {
 
 function getTracks() {
   // GET request to `${SERVER}/api/tracks`
+  const req = new XMLHttpRequest();
+  req.open("GET", `${SERVER}/api/tracks`);
+  req.onreadystatechange = () => {
+    if (req.readyState === XMLHttpRequest.DONE) {
+      const { status } = req;
+      if ((status >= 200 && status < 400) || status === 0) {
+        console.log(`Response received from game engine! ${req.responseText}`);
+      } else {
+        console.warn("An error occured in retrieving data.");
+      }
+    }
+  };
+  req.send();
 }
 
 function getRacers() {
@@ -356,3 +369,7 @@ function accelerate(id) {
   // options parameter provided as defaultFetchOpts
   // no body or datatype needed for this request
 }
+
+// ==================================
+// Test calls
+getTracks();
