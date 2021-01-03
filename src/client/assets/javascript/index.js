@@ -4,7 +4,7 @@
 const store = {
   track_id: undefined,
   player_id: undefined,
-  race_id: undefined,
+  race_id: undefined
 };
 
 // We need our javascript to wait until the DOM is loaded
@@ -185,7 +185,9 @@ function renderRacerCars(racers) {
 }
 
 function renderRacerCard(racer) {
-  const { id, driver_name, top_speed, acceleration, handling } = racer;
+  const {
+    id, driver_name, top_speed, acceleration, handling
+  } = racer;
 
   return `
 		<li class="card podracer" id="${id}">
@@ -308,8 +310,8 @@ function defaultFetchOpts() {
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": SERVER,
-    },
+      "Access-Control-Allow-Origin": SERVER
+    }
   };
 }
 
@@ -334,6 +336,21 @@ function getTracks() {
 
 function getRacers() {
   // GET request to `${SERVER}/api/cars`
+  const req = new XMLHttpRequest();
+  req.open("GET", `${SERVER}/api/cars`);
+  req.onreadystatechange = () => {
+    if (req.readyState === XMLHttpRequest.DONE) {
+      const { status } = req;
+      if (status >= 200 && status < 400) {
+        console.log("Racing Car Response is: \n", req.responseText);
+      } else {
+        console.log("Error in response from API");
+      }
+    } else {
+      console.log("Error in fetching racing car data");
+    }
+  };
+  req.send();
 }
 
 function createRace(player_id, track_id) {
@@ -345,7 +362,7 @@ function createRace(player_id, track_id) {
     method: "POST",
     ...defaultFetchOpts(),
     dataType: "jsonp",
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   })
     .then((res) => res.json())
     .catch((err) => console.log("Problem with createRace request::", err));
@@ -358,7 +375,7 @@ function getRace(id) {
 function startRace(id) {
   return fetch(`${SERVER}/api/races/${id}/start`, {
     method: "POST",
-    ...defaultFetchOpts(),
+    ...defaultFetchOpts()
   })
     .then((res) => res.json())
     .catch((err) => console.log("Problem with getRace request::", err));
@@ -373,3 +390,4 @@ function accelerate(id) {
 // ==================================
 // Test calls
 getTracks();
+getRacers();
