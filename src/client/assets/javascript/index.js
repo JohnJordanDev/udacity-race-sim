@@ -4,7 +4,7 @@
 const store = {
   track_id: undefined,
   player_id: undefined,
-  race_id: undefined
+  race_id: undefined,
 };
 
 // We need our javascript to wait until the DOM is loaded
@@ -179,15 +179,13 @@ function renderRacerCars(racers) {
 
   return `
 		<ul id="racers">
-			${reuslts}
+			${results}
 		</ul>
 	`;
 }
 
 function renderRacerCard(racer) {
-  const {
-    id, driver_name, top_speed, acceleration, handling
-  } = racer;
+  const { id, driver_name, top_speed, acceleration, handling } = racer;
 
   return `
 		<li class="card podracer" id="${id}">
@@ -310,8 +308,8 @@ function defaultFetchOpts() {
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": SERVER
-    }
+      "Access-Control-Allow-Origin": SERVER,
+    },
   };
 }
 
@@ -319,38 +317,18 @@ function defaultFetchOpts() {
 
 function getTracks() {
   // GET request to `${SERVER}/api/tracks`
-  const req = new XMLHttpRequest();
-  req.open("GET", `${SERVER}/api/tracks`);
-  req.onreadystatechange = () => {
-    if (req.readyState === XMLHttpRequest.DONE) {
-      const { status } = req;
-      if ((status >= 200 && status < 400) || status === 0) {
-        console.log(`Response received from game engine! ${req.responseText}`);
-      } else {
-        console.warn("An error occured in retrieving data.");
-      }
-    }
-  };
-  req.send();
+  fetch(`${SERVER}/api/tracks`)
+    .then((response) => response.json())
+    .then((tracks) => renderAt("#tracks", renderTrackCards(tracks)))
+    .catch((err) => console.log(err));
 }
 
 function getRacers() {
   // GET request to `${SERVER}/api/cars`
-  const req = new XMLHttpRequest();
-  req.open("GET", `${SERVER}/api/cars`);
-  req.onreadystatechange = () => {
-    if (req.readyState === XMLHttpRequest.DONE) {
-      const { status } = req;
-      if (status >= 200 && status < 400) {
-        console.log("Racing Car Response is: \n", req.responseText);
-      } else {
-        console.log("Error in response from API");
-      }
-    } else {
-      console.log("Error in fetching racing car data");
-    }
-  };
-  req.send();
+  fetch(`${SERVER}/api/cars`)
+    .then((response) => response.json())
+    .then((cars) => renderAt("#racers", renderRacerCars(cars)))
+    .catch((err) => console.log(err));
 }
 
 function createRace(player_id, track_id) {
@@ -362,7 +340,7 @@ function createRace(player_id, track_id) {
     method: "POST",
     ...defaultFetchOpts(),
     dataType: "jsonp",
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   })
     .then((res) => res.json())
     .catch((err) => console.log("Problem with createRace request::", err));
@@ -375,7 +353,7 @@ function getRace(id) {
 function startRace(id) {
   return fetch(`${SERVER}/api/races/${id}/start`, {
     method: "POST",
-    ...defaultFetchOpts()
+    ...defaultFetchOpts(),
   })
     .then((res) => res.json())
     .catch((err) => console.log("Problem with getRace request::", err));
