@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function onPageLoad() {
   try {
     getTracks().then((tracks) => {
+      console.log('trying to get tracks...', tracks);
       const html = renderTrackCards(tracks);
       renderAt("#tracks", html);
     });
@@ -35,7 +36,7 @@ function setupClickHandlers() {
     "click",
     (event) => {
       const { target } = event;
-
+      
       // Race track form field
       if (target.matches(".card.track")) {
         handleSelectTrack(target);
@@ -317,18 +318,16 @@ function defaultFetchOpts() {
 
 function getTracks() {
   // GET request to `${SERVER}/api/tracks`
-  fetch(`${SERVER}/api/tracks`)
-    .then((response) => response.json())
-    .then((tracks) => renderAt("#tracks", renderTrackCards(tracks)))
-    .catch((err) => console.log(err));
+  return fetch(`${SERVER}/api/tracks`).then((response) => response.json());
+    // TODO: Error handling to UI
+    //.catch((err) => console.log(err));
 }
 
 function getRacers() {
   // GET request to `${SERVER}/api/cars`
-  fetch(`${SERVER}/api/cars`)
-    .then((response) => response.json())
-    .then((cars) => renderAt("#racers", renderRacerCars(cars)))
-    .catch((err) => console.log(err));
+  return fetch(`${SERVER}/api/cars`).then((response) => response.json());
+    // TODO: Error handling to UI
+    //.catch((err) => console.log(err));
 }
 
 function createRace(player_id, track_id) {
@@ -348,6 +347,7 @@ function createRace(player_id, track_id) {
 
 function getRace(id) {
   // GET request to `${SERVER}/api/races/${id}`
+  //fetch(`${SERVER}/api/races/${id}`).catch(err => console.log("Problem with getting ", err));
 }
 
 function startRace(id) {
@@ -365,7 +365,4 @@ function accelerate(id) {
   // no body or datatype needed for this request
 }
 
-// ==================================
-// Test calls
-getTracks();
-getRacers();
+window.setTimeout(onPageLoad, 3000);
