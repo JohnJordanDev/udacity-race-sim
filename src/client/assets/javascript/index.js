@@ -13,18 +13,25 @@ document.addEventListener("DOMContentLoaded", () => {
   setupClickHandlers();
 });
 
+function enableButtonElement(elem) {
+  elem.classList.remove('disabled');
+  elem.removeAttribute('disabled');
+}
+
 async function onPageLoad() {
   try {
-    getTracks().then((tracks) => {
-      console.log('trying to get tracks...', tracks);
-      const html = renderTrackCards(tracks);
-      renderAt("#tracks", html);
-    });
+    Promise.all([getTracks(), getRacers()]).then( res => {
+      const tracks = res[0];
+      const trackHtml = renderTrackCards(tracks);
+      renderAt("#tracks", trackHtml);
 
-    getRacers().then((racers) => {
-      const html = renderRacerCars(racers);
-      renderAt("#racers", html);
-    });
+      const racers = res[1];
+      const racerHtml =  renderRacerCars(racers);
+      renderAt("#racers", racerHtml);
+      enableButtonElement(window.document.getElementById('submit-create-race'));
+    }).catch( err => {
+      //TODO: error message to UI
+    })
   } catch (error) {
     console.log("Problem getting tracks and racers ::", error.message);
     console.error(error);
@@ -36,15 +43,20 @@ function setupClickHandlers() {
     "click",
     (event) => {
       const { target } = event;
-      
+
+      console.log("clicking, ", target);
       // Race track form field
       if (target.matches(".card.track")) {
         handleSelectTrack(target);
+      } else if (target.parentNode.matches(".card.track")) {
+        handleSelectTrack(target.parentNode);
       }
 
       // Podracer form field
       if (target.matches(".card.podracer")) {
         handleSelectPodRacer(target);
+      } else if (target.parentNode.matches(".card.podracer")) {
+        handleSelectPodRacer(target.parentNode);
       }
 
       // Submit create race form
@@ -77,11 +89,17 @@ async function delay(ms) {
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
   // render starting UI
-  renderAt("#race", renderRaceStartView());
-
   // TODO - Get player_id and track_id from the store
+  const { track_id, player_id } = store;
+
+  renderAt("#race", renderRaceStartView(track_id, player_id));
 
   // const race = TODO - invoke the API call to create the race, then save the result
+  const race = createRace(track_id, player_id).then((res) => {
+    console.log('result is NOW:..', res);
+    return res;
+  });
+  console.log("race is ", race);
 
   // TODO - update the store with the race id
 
@@ -132,8 +150,6 @@ async function runCountdown() {
 }
 
 function handleSelectPodRacer(target) {
-  console.log("selected a pod", target.id);
-
   // remove class selected from all racer options
   const selected = document.querySelector("#racers .selected");
   if (selected) {
@@ -143,12 +159,10 @@ function handleSelectPodRacer(target) {
   // add class selected to current target
   target.classList.add("selected");
 
-  // TODO - save the selected racer to the store
+  store["player_id"] = target.id;
 }
 
 function handleSelectTrack(target) {
-  console.log("selected a track", target.id);
-
   // remove class selected from all track options
   const selected = document.querySelector("#tracks .selected");
   if (selected) {
@@ -158,7 +172,7 @@ function handleSelectTrack(target) {
   // add class selected to current target
   target.classList.add("selected");
 
-  // TODO - save the selected track id to the store
+  store["track_id"] = target.id;
 }
 
 function handleAccelerate() {
@@ -178,11 +192,7 @@ function renderRacerCars(racers) {
 
   const results = racers.map(renderRacerCard).join("");
 
-  return `
-		<ul id="racers">
-			${results}
-		</ul>
-	`;
+  return `${results}`;
 }
 
 function renderRacerCard(racer) {
@@ -207,11 +217,7 @@ function renderTrackCards(tracks) {
 
   const results = tracks.map(renderTrackCard).join("");
 
-  return `
-		<ul id="tracks">
-			${results}
-		</ul>
-	`;
+  return `${results}`;
 }
 
 function renderTrackCard(track) {
@@ -319,15 +325,15 @@ function defaultFetchOpts() {
 function getTracks() {
   // GET request to `${SERVER}/api/tracks`
   return fetch(`${SERVER}/api/tracks`).then((response) => response.json());
-    // TODO: Error handling to UI
-    //.catch((err) => console.log(err));
+  // TODO: Error handling to UI
+  //.catch((err) => console.log(err));
 }
 
 function getRacers() {
   // GET request to `${SERVER}/api/cars`
   return fetch(`${SERVER}/api/cars`).then((response) => response.json());
-    // TODO: Error handling to UI
-    //.catch((err) => console.log(err));
+  // TODO: Error handling to UI
+  //.catch((err) => console.log(err));
 }
 
 function createRace(player_id, track_id) {
@@ -366,3 +372,9 @@ function accelerate(id) {
 }
 
 window.setTimeout(onPageLoad, 3000);
+
+// window.setTimeout(() => {
+//   window.document.querySelector("#tracks #\\31 ").click();
+//   window.document.querySelector("#racers #\\31 ").click();
+//   window.document.querySelector("#submit-create-race").click();
+// }, 3500);
