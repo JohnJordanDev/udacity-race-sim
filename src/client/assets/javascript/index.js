@@ -14,24 +14,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function enableButtonElement(elem) {
-  elem.classList.remove('disabled');
-  elem.removeAttribute('disabled');
+  elem.classList.remove("disabled");
+  elem.removeAttribute("disabled");
+}
+
+function rejectedAfterTime(timeLimit){
+  return new Promise((res, rej)=> {
+    window.setTimeout(rej, timeLimit, 'API call took too long');
+  });
 }
 
 async function onPageLoad() {
+  const allowApiThisTime = 0;
   try {
-    Promise.all([getTracks(), getRacers()]).then( res => {
-      const tracks = res[0];
-      const trackHtml = renderTrackCards(tracks);
-      renderAt("#tracks", trackHtml);
+    // 'all' will run catch immediately if ONE promise fails, so
+    // TODO: add in function that returns rejection after x seconds
+    Promise.all([getTracks(), getRacers(), rejectedAfterTime(allowApiThisTime)])
+      .then((res) => {
+        const tracks = res[0];
+        const trackHtml = renderTrackCards(tracks);
+        renderAt("#tracks", trackHtml);
 
-      const racers = res[1];
-      const racerHtml =  renderRacerCars(racers);
-      renderAt("#racers", racerHtml);
-      enableButtonElement(window.document.getElementById('submit-create-race'));
-    }).catch( err => {
-      //TODO: error message to UI
-    })
+        const racers = res[1];
+        const racerHtml = renderRacerCars(racers);
+        renderAt("#racers", racerHtml);
+        enableButtonElement(
+          window.document.getElementById("submit-create-race")
+        );
+      })
+      .catch((err) => {
+        //TODO: error message to UI
+        console.log("onPageLoad had a rejected Promise: ", err);
+      });
   } catch (error) {
     console.log("Problem getting tracks and racers ::", error.message);
     console.error(error);
@@ -96,7 +110,7 @@ async function handleCreateRace() {
 
   // const race = TODO - invoke the API call to create the race, then save the result
   const race = createRace(track_id, player_id).then((res) => {
-    console.log('result is NOW:..', res);
+    console.log("result is NOW:..", res);
     return res;
   });
   console.log("race is ", race);
