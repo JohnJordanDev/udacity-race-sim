@@ -24,31 +24,36 @@ function rejectedAfterTime(timeLimit){
   });
 }
 
+function getErrorMessageMarkup(message) {
+  return `<h2>An Error has Occurred!</h2><p>${message}<p>`;
+}
+
 async function onPageLoad() {
-  const allowApiThisTime = 0;
+  const allowApiThisTime = 3000;
+  const apiTimeoutMsg = 'Sorry, the API took too long to respond. Please reload the page and try again.'
   try {
     // 'all' will run catch immediately if ONE promise fails, so
-    // TODO: add in function that returns rejection after x seconds
-    Promise.all([getTracks(), getRacers(), rejectedAfterTime(allowApiThisTime)])
-      .then((res) => {
-        const tracks = res[0];
-        const trackHtml = renderTrackCards(tracks);
-        renderAt("#tracks", trackHtml);
+    const timeOut = rejectedAfterTime(allowApiThisTime);
+    const tracks =  getTracks();
+    const racers =  getRacers();
+    Promise.race([tracks, timeOut]).then(tracks => {
+      const trackHtml = renderTrackCards(tracks);
+      renderAt("#tracks", trackHtml);
+    }).catch(err => {
+      renderAt('#create-race', getErrorMessageMarkup(apiTimeoutMsg));
+    });
 
-        const racers = res[1];
-        const racerHtml = renderRacerCars(racers);
+    Promise.race([racers, timeOut]).then(raceCars => {
+      const racerHtml = renderRacerCars(raceCars);
         renderAt("#racers", racerHtml);
         enableButtonElement(
           window.document.getElementById("submit-create-race")
         );
-      })
-      .catch((err) => {
-        //TODO: error message to UI
-        console.log("onPageLoad had a rejected Promise: ", err);
-      });
+    }).catch(err => {
+      renderAt('#create-race', getErrorMessageMarkup(apiTimeoutMsg));
+    });
   } catch (error) {
-    console.log("Problem getting tracks and racers ::", error.message);
-    console.error(error);
+      renderAt('#create-race', getErrorMessageMarkup('Sorry, something went wrong: please reload the page and try again.'));
   }
 }
 
