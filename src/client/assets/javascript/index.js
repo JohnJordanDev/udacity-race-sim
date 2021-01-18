@@ -18,9 +18,9 @@ function enableButtonElement(elem) {
   elem.removeAttribute("disabled");
 }
 
-function rejectedAfterTime(timeLimit){
-  return new Promise((res, rej)=> {
-    window.setTimeout(rej, timeLimit, 'API call took too long');
+function rejectedAfterTime(timeLimit) {
+  return new Promise((res, rej) => {
+    window.setTimeout(rej, timeLimit, "API call took too long");
   });
 }
 
@@ -30,30 +30,40 @@ function getErrorMessageMarkup(message) {
 
 async function onPageLoad() {
   const allowApiThisTime = 3000;
-  const apiTimeoutMsg = 'Sorry, the API took too long to respond. Please reload the page and try again.'
+  const apiTimeoutMsg =
+    "Sorry, the API took too long to respond. Please reload the page and try again.";
   try {
     // 'all' will run catch immediately if ONE promise fails, so
     const timeOut = rejectedAfterTime(allowApiThisTime);
-    const tracks =  getTracks();
-    const racers =  getRacers();
-    Promise.race([tracks, timeOut]).then(tracks => {
-      const trackHtml = renderTrackCards(tracks);
-      renderAt("#tracks", trackHtml);
-    }).catch(err => {
-      renderAt('#create-race', getErrorMessageMarkup(apiTimeoutMsg));
-    });
+    const tracks = getTracks();
+    const racers = getRacers();
+    Promise.race([tracks, timeOut])
+      .then((tracks) => {
+        const trackHtml = renderTrackCards(tracks);
+        renderAt("#tracks", trackHtml);
+      })
+      .catch((err) => {
+        renderAt("#create-race", getErrorMessageMarkup(apiTimeoutMsg));
+      });
 
-    Promise.race([racers, timeOut]).then(raceCars => {
-      const racerHtml = renderRacerCars(raceCars);
+    Promise.race([racers, timeOut])
+      .then((raceCars) => {
+        const racerHtml = renderRacerCars(raceCars);
         renderAt("#racers", racerHtml);
         enableButtonElement(
           window.document.getElementById("submit-create-race")
         );
-    }).catch(err => {
-      renderAt('#create-race', getErrorMessageMarkup(apiTimeoutMsg));
-    });
+      })
+      .catch((err) => {
+        renderAt("#create-race", getErrorMessageMarkup(apiTimeoutMsg));
+      });
   } catch (error) {
-      renderAt('#create-race', getErrorMessageMarkup('Sorry, something went wrong: please reload the page and try again.'));
+    renderAt(
+      "#create-race",
+      getErrorMessageMarkup(
+        "Sorry, something went wrong: please reload the page and try again."
+      )
+    );
   }
 }
 
@@ -114,20 +124,25 @@ async function handleCreateRace() {
   renderAt("#race", renderRaceStartView(track_id, player_id));
 
   // const race = TODO - invoke the API call to create the race, then save the result
-  const race = createRace(track_id, player_id).then((res) => {
-    console.log("result is NOW:..", res);
-    return res;
-  });
-  console.log("race is ", race);
+  const race = createRace(track_id, player_id)
+    .then((raceData) => {
+      console.log("result is NOW:..", raceData);
+      // TODO - update the store with the race id
+      store.race_id = raceData.ID;
 
-  // TODO - update the store with the race id
+      // The race has been created, now start the countdown
+      // TODO - call the async function runCountdown
+      runCountdown().then(() => {
+        console.log('Timer is done! ');
+        startRace(store.race_id);
+      }).catch();
 
-  // The race has been created, now start the countdown
-  // TODO - call the async function runCountdown
+      // TODO - call the async function startRace
 
-  // TODO - call the async function startRace
-
-  // TODO - call the async function runRace
+      // TODO - call the async function runRace
+      return raceData;
+    })
+    .catch((err) => console.error("error eith creating a race", err));
 }
 
 function runRace(raceID) {
@@ -157,11 +172,18 @@ async function runCountdown() {
 
     return new Promise((resolve) => {
       // TODO - use Javascript's built in setInterval method to count down once per second
+      const intervalTimer = window.setInterval(() => {
+        // run this DOM manipulation to decrement the countdown for the user
+        document.getElementById("big-numbers").innerHTML = --timer;
 
-      // run this DOM manipulation to decrement the countdown for the user
-      document.getElementById("big-numbers").innerHTML = --timer;
+        console.log("timer is: ", timer);
 
-      // TODO - if the countdown is done, clear the interval, resolve the promise, and return
+        // TODO - if the countdown is done, clear the interval, resolve the promise, and return
+        if (timer === 0) {
+          window.clearInterval(intervalTimer);
+          resolve();
+        }
+      }, 1000);
     });
   } catch (error) {
     console.log(error);
@@ -344,15 +366,11 @@ function defaultFetchOpts() {
 function getTracks() {
   // GET request to `${SERVER}/api/tracks`
   return fetch(`${SERVER}/api/tracks`).then((response) => response.json());
-  // TODO: Error handling to UI
-  //.catch((err) => console.log(err));
 }
 
 function getRacers() {
   // GET request to `${SERVER}/api/cars`
   return fetch(`${SERVER}/api/cars`).then((response) => response.json());
-  // TODO: Error handling to UI
-  //.catch((err) => console.log(err));
 }
 
 function createRace(player_id, track_id) {
@@ -390,10 +408,8 @@ function accelerate(id) {
   // no body or datatype needed for this request
 }
 
-window.setTimeout(onPageLoad, 3000);
-
-// window.setTimeout(() => {
-//   window.document.querySelector("#tracks #\\31 ").click();
-//   window.document.querySelector("#racers #\\31 ").click();
-//   window.document.querySelector("#submit-create-race").click();
-// }, 3500);
+window.setTimeout(() => {
+  window.document.querySelector("#tracks #\\31 ").click();
+  window.document.querySelector("#racers #\\31 ").click();
+  window.document.querySelector("#submit-create-race").click();
+}, 1000);
