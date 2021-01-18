@@ -119,9 +119,9 @@ async function delay(ms) {
 async function handleCreateRace() {
   // render starting UI
   // TODO - Get player_id and track_id from the store
-  const { track_id, player_id } = store;
+  const { track_id, track_name, player_id } = store;
 
-  renderAt("#race", renderRaceStartView(track_id, player_id));
+  renderAt("#race", renderRaceStartView(track_name, player_id));
 
   // const race = TODO - invoke the API call to create the race, then save the result
   const race = createRace(track_id, player_id)
@@ -214,8 +214,10 @@ function handleSelectTrack(target) {
 
   // add class selected to current target
   target.classList.add("selected");
+  const trackName = window.document.querySelector("#tracks .selected h3").textContent;
 
   store["track_id"] = window.parseInt(target.id);
+  store["track_name"] = trackName;
 }
 
 function handleAccelerate() {
@@ -281,10 +283,10 @@ function renderCountdown(count) {
 	`;
 }
 
-function renderRaceStartView(track, racers) {
+function renderRaceStartView(trackName, racers) {
   return `
 		<header>
-			<h1>Race: ${track.name}</h1>
+			<h1>Race: ${trackName}</h1>
 		</header>
 		<main id="two-columns">
 			<section id="leaderBoard">
@@ -413,12 +415,11 @@ function accelerate(id) {
   fetch(`${SERVER}/api/races/${id}/accelerate`, {
     method: "POST",
     ...defaultFetchOpts(),
-  })
-    .catch((err) => console.log("Problem with accelerate request::", err));
+  }).catch((err) => console.log("Problem with accelerate request::", err));
 }
 
-window.setTimeout(() => {
-  window.document.querySelector("#tracks #\\31 ").click();
-  window.document.querySelector("#racers #\\31 ").click();
-  window.document.querySelector("#submit-create-race").click();
-}, 1000);
+// window.setTimeout(() => {
+//   window.document.querySelector("#tracks #\\31 ").click();
+//   window.document.querySelector("#racers #\\31 ").click();
+//   window.document.querySelector("#submit-create-race").click();
+// }, 3000);
