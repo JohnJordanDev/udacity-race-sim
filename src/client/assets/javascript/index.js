@@ -126,15 +126,12 @@ async function handleCreateRace() {
   // const race = TODO - invoke the API call to create the race, then save the result
   const race = createRace(track_id, player_id)
     .then((raceData) => {
-      console.log("result is NOW:..", raceData);
       // TODO - update the store with the race id
-      // Subtracting 1 is needed to fix issue with backend of API
+      // Subtracting 1 is needed, since backend API uses zero-indexing
       store.race_id = window.parseInt(raceData.ID) - 1;
 
       // The race has been created, now start the countdown
-      // TODO - call the async function runCountdown
       runCountdown().then(() => {
-        console.log('Timer is done! ', store.race_id);
       // TODO - call the async function startRace
         startRace(store.race_id);
       // TODO - call the async function runRace
@@ -155,6 +152,7 @@ function runRace(raceID) {
     // TODO - use Javascript's built in setInterval method to get race info every 500ms
     const getRaceInfo = window.setInterval( async () => {
       const res = await getRace(raceID);
+      console.log('res is ', res);
       if(res.status === "in-progress") {
         renderAt('#leaderBoard', raceProgress(res.positions));
       }
@@ -204,7 +202,7 @@ function handleSelectPodRacer(target) {
   // add class selected to current target
   target.classList.add("selected");
 
-  store["player_id"] = target.id;
+  store["player_id"] = window.parseInt(target.id);
 }
 
 function handleSelectTrack(target) {
@@ -217,12 +215,13 @@ function handleSelectTrack(target) {
   // add class selected to current target
   target.classList.add("selected");
 
-  store["track_id"] = target.id;
+  store["track_id"] = window.parseInt(target.id);
 }
 
 function handleAccelerate() {
   console.log("accelerate button clicked");
-  // TODO - Invoke the API call to accelerate
+  // Expects track ID, and is indexed from 0 on backend
+  accelerate(window.parseInt(store.track_id) - 1);
 }
 
 // HTML VIEWS ------------------------------------------------
@@ -411,6 +410,11 @@ function accelerate(id) {
   // POST request to `${SERVER}/api/races/${id}/accelerate`
   // options parameter provided as defaultFetchOpts
   // no body or datatype needed for this request
+  fetch(`${SERVER}/api/races/${id}/accelerate`, {
+    method: "POST",
+    ...defaultFetchOpts(),
+  })
+    .catch((err) => console.log("Problem with accelerate request::", err));
 }
 
 window.setTimeout(() => {
