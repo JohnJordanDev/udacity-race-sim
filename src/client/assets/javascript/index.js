@@ -33,6 +33,7 @@ async function onPageLoad() {
   const apiTimeoutMsg =
     "Sorry, the API took too long to respond. Please reload the page and try again.";
   try {
+    // Creating timeout, so that app fails if API takes too long to respons for track and race calls
     const timeOut = rejectedAfterTime(allowApiThisTime);
     const tracks = getTracks();
     const racers = getRacers();
@@ -138,15 +139,19 @@ function runRace(raceID) {
   return new Promise((resolve) => {
     // use Javascript's built in setInterval method to get race info every 500ms
     const getRaceInfo = window.setInterval(async () => {
-      const res = await getRace(raceID);
-      console.log("res is ", res);
-      if (res.status === "in-progress") {
-        renderAt("#leaderBoard", raceProgress(res.positions));
-      }
-      if (res.status === "finished") {
-        clearInterval(getRaceInfo); // to stop the interval from repeating
-        renderAt("#race", resultsView(res.positions)); // to render the results view
-        resolve(res); // resolve the promise
+      try {
+        const res = await getRace(raceID);
+        console.log("res is ", res);
+        if (res.status === "in-progress") {
+          renderAt("#leaderBoard", raceProgress(res.positions));
+        }
+        if (res.status === "finished") {
+          clearInterval(getRaceInfo); // to stop the interval from repeating
+          renderAt("#race", resultsView(res.positions)); // to render the results view
+          resolve(res); // resolve the promise
+        }
+      } catch(err) {
+        console.log('An error happened in the async interval of runRace: ', err);
       }
     }, 500);
   }).catch((err) => {
@@ -233,10 +238,10 @@ function renderRacerCard(racer) {
 
   return `
 		<li class="card podracer" id="${id}">
-			<h3>${driver_name}</h3>
-			<p>${top_speed}</p>
-			<p>${acceleration}</p>
-			<p>${handling}</p>
+			<h3>Driver: ${driver_name}</h3>
+			<p>Top Speed: ${top_speed}</p>
+			<p>Acceleration: ${acceleration}</p>
+			<p>Handling: ${handling}</p>
 		</li>
 	`;
 }
